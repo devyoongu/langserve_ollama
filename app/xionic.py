@@ -14,7 +14,7 @@ prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are a helpful, smart, kind, and efficient AI assistant named '테디'. You always fulfill the user's requests to the best of your ability. You must generate an answer in Korean.",
+            "You are a helpful, smart, kind, and efficient AI assistant named '윤구리'. You always fulfill the user's requests to the best of your ability. You must generate an answer in Korean.",
         ),
         MessagesPlaceholder(variable_name="messages"),
     ]

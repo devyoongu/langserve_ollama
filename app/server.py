@@ -9,7 +9,8 @@ from chain import chain
 from chat import chain as chat_chain
 from translator import chain as EN_TO_KO_chain
 from llm import llm as model
-from xionic import chain as xionic_chain
+
+# from xionic import chain as xionic_chain
 
 
 app = FastAPI()
@@ -27,7 +28,9 @@ app.add_middleware(
 
 @app.get("/")
 async def redirect_root_to_docs():
-    return RedirectResponse("/xionic/playground")
+    # return RedirectResponse("/xionic/playground")
+    # return RedirectResponse("/prompt/playground")
+    return RedirectResponse("/chat/playground")
 
 
 add_routes(app, chain, path="/prompt")
@@ -55,14 +58,15 @@ add_routes(app, EN_TO_KO_chain, path="/translate")
 
 add_routes(app, model, path="/llm")
 
-add_routes(
-    app,
-    xionic_chain.with_types(input_type=InputChat),
-    path="/xionic",
-    enable_feedback_endpoint=True,
-    enable_public_trace_link_endpoint=True,
-    playground_type="chat",
-)
+# xionic.py 를 사용할 경우
+# add_routes(
+#     app,
+#     xionic_chain.with_types(input_type=InputChat),
+#     path="/xionic",
+#     enable_feedback_endpoint=True,
+#     enable_public_trace_link_endpoint=True,
+#     playground_type="chat",
+# )
 
 if __name__ == "__main__":
     import uvicorn
