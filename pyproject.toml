@@ -22,6 +22,7 @@ langchain-text-splitters = "^0.0.1"
 httpx-sse = "^0.4.0"
 sentence-transformers = "^2.6.1"
 ipykernel = "^6.29.5"
+langchain-teddynote = "^0.0.34"
 
 
 [build-system]
