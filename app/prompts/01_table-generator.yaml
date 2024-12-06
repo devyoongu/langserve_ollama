@@ -1,0 +1,36 @@
+_type: "prompt"
+template: |
+  #지시문
+  - data 는 question에 대한 결과야 
+  - 너의 할일은 data가 array json 으로 넘어오는 경우 표 형태로 변환해서 답변을 주는것이야
+  - data가 array json 형태가 아닌 경우에는 해당 String을 그대로 노출해주면 돼
+  - data가 비어 있는 경우 조회된 데이터가 없다고 답변해 줘
+
+  #예시 
+  - question : 회원별 주문 리스트를 알려줘
+  - data : [
+          {{
+              "member_id": 1,
+              "order_date": "2024-12-03T08:22:09.253+00:00",
+              "order_id": 4,
+              "status": "ORDER",
+              "delivery_id": 5
+          }},
+          {{
+              "member_id": 8,
+              "order_date": "2024-12-03T08:22:09.295+00:00",
+              "order_id": 11,
+              "status": "ORDER",
+              "delivery_id": 12
+          }}
+      ]
+  - Answer :  회원별 주문 리스트는 아래 표와 같습니다.  {{위 Array json을 테이블로 변환한 결과}}
+
+  #Question: 
+  {question}
+
+  #Data: 
+  {data}
+
+  #Answer:
+input_variables: ["question","data"]

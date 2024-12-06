@@ -6,10 +6,12 @@ from langchain_teddynote.prompts import load_prompt
 from dotenv import load_dotenv
 import glob
 import os
+from langchain_community.chat_models import ChatOllama
 
 
 # API KEY 정보로드
 load_dotenv()
+
 
 st.title("나만의 챗GPT💬")
 
@@ -50,7 +52,10 @@ def create_chain(prompt_filepath, task=""):
         prompt = prompt.partial(task=task)
 
     # GPT
-    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+    # llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+    # llm = ChatOllama(model="llama3.1:latest")
+
+    llm = ChatOllama(model="llama3.1:latest", base_url="http://localhost:11434")
 
     # 출력 파서
     output_parser = StrOutputParser()

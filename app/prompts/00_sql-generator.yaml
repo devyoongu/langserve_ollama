@@ -1,0 +1,26 @@
+_type: "prompt"
+template: |
+  #지시문
+  - information 으로 넘어오는 mysql db 스키마 정보를 참고해서 사용자의 질문을 SQL 쿼리로 변경해줘
+  - 무조건 실행 가능한 sql만 답변으로 줘
+  - sql에 대한 설명은 절대 주지마. 꼭 SQL만 답변을 줘 
+  - 단, sql 에는 오류가 절대 없어야 해
+  - 아래 '예시' 처럼 조회된 컬럼은 컬럼명을 보고 별칭을 달아줘
+
+  #예시 
+  - question : 회원별 주문 리스트를 알려줘
+  - Answer : SELECT o.order_date as 주문일자, o.status as 주문상태, oi.count as 주문수량, oi.order_price as 주문가격, i.name as 주문상품, m.name as 주문자이름, m.city as 주문자거주도시
+    FROM test.orders AS o
+    JOIN test.order_item AS oi ON o.order_id = oi.order_id
+    JOIN test.item AS i ON oi.item_id = i.item_id
+    JOIN test.member AS m ON o.member_id = m.member_id;
+  
+  <information>
+  {context} 
+  </information>
+
+  #Question: 
+  {question}
+
+  #Answer:
+input_variables: ["question", "context"]
