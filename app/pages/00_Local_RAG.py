@@ -90,7 +90,7 @@ def create_first_chain(retriever, model_name="ollama"):
     print("INFO: Using 'ollama' model configuration.")
 
     # 단계 6: 프롬프트 생성(Create Prompt)
-    prompt = load_prompt("prompts/pdf-rag-sql.yaml", encoding="utf-8")
+    prompt = load_prompt("prompts/pdf-rag-ollama.yaml", encoding="utf-8")
 
     # 단계 7: 언어모델(LLM) 생성
     # Ollama 모델을 불러옵니다.

@@ -8,7 +8,7 @@ template: |
 
   #예시 
   - question : 회원별 주문 리스트를 알려줘
-  - data : [
+  - ata : [
           {{
               "member_id": 1,
               "order_date": "2024-12-03T08:22:09.253+00:00",
@@ -22,7 +22,7 @@ template: |
               "order_id": 11,
               "status": "ORDER",
               "delivery_id": 12
-          }}
+          d}}
       ]
   - Answer :  회원별 주문 리스트는 아래 표와 같습니다.  {{위 Array json을 테이블로 변환한 결과}}
 

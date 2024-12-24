@@ -6,7 +6,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 from langchain_teddynote import logging
 from dotenv import load_dotenv
@@ -157,16 +156,23 @@ def process_first_chain(user_input):
     if not first_chain:
         warning_msg.error("파일을 업로드 해주세요.")
         return None
-    ai_answer = first_chain.invoke(user_input)
+
+    # 사용자의 입력을 즉시 화면에 표시
     st.chat_message("user").write(user_input)
+
+    # 체인을 호출하여 응답 생성
+    ai_answer = first_chain.invoke(user_input)
+
+    # 체인의 응답을 화면에 표시
     with st.chat_message("assistant"):
         st.markdown(ai_answer)
+
     return ai_answer
 
 
 def call_external_api(ai_answer):
     """외부 API 호출."""
-    api_url = "http://localhost:8080/sqldeck/execute"
+    api_url = "http://localhost:8080/api/sqldeck/execute"
     api_headers = {"Content-Type": "application/json"}
     api_body = {"sqlQuery": ai_answer}
     try:
@@ -199,10 +205,11 @@ def process_second_chain(user_input, api_result):
 
 # 메인 로직
 if user_input:
-    # 1차 체인 처리
+    # 사용자의 입력을 바로 화면에 표시하고 1차 체인을 처리
     ai_answer = process_first_chain(user_input)
     if not ai_answer:
-        warning_msg.error("first llm is response error")
+        warning_msg.error("1차 체인 응답 처리 중 오류가 발생했습니다.")
+        # return
 
     # 외부 API 호출
     api_result = call_external_api(ai_answer)
