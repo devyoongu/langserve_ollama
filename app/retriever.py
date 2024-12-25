@@ -2,6 +2,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+import os
+
+# 벡터 DB 저장 경로
+FAISS_DB_PATH = "./faiss_db"
 
 
 def create_retriever(file_path):
@@ -16,11 +20,22 @@ def create_retriever(file_path):
     # 단계 3: 임베딩(Embedding) 생성
     embeddings = OpenAIEmbeddings()
 
-    # 단계 4: DB 생성(Create DB) 및 저장
-    # 벡터스토어를 생성합니다.
-    vectorstore = FAISS.from_documents(documents=split_documents, embedding=embeddings)
+    # 단계 4: DB 생성(Create or Load DB)
+    if os.path.exists(FAISS_DB_PATH):
+        # 기존 FAISS DB 로드 (위험한 직렬화 허용)
+        vectorstore = FAISS.load_local(
+            FAISS_DB_PATH, embeddings, allow_dangerous_deserialization=True
+        )
+        print("INFO: Existing FAISS DB loaded from disk.")
+    else:
+        # 새롭게 FAISS DB 생성
+        vectorstore = FAISS.from_documents(
+            documents=split_documents, embedding=embeddings
+        )
+        # 디스크에 저장
+        vectorstore.save_local(FAISS_DB_PATH)
+        print("INFO: New FAISS DB created and saved to disk.")
 
     # 단계 5: 검색기(Retriever) 생성
-    # 문서에 포함되어 있는 정보를 검색하고 생성합니다.
     retriever = vectorstore.as_retriever()
     return retriever
