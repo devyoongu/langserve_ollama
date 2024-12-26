@@ -56,7 +56,10 @@ if uploaded_file:
     retriever = embed_file(uploaded_file)
     chain = create_first_chain(retriever, model_name=selected_model)
     st.session_state["chain"] = chain
-# else:
+else:
+    retriever = create_retriever()
+    chain = create_first_chain(retriever, model_name=selected_model)
+    st.session_state["chain"] = chain
 
 
 # 이전 대화를 출력
