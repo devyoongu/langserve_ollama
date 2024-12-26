@@ -166,7 +166,7 @@ def process_first_chain(user_input):
 
 def call_external_api(ai_answer):
     """외부 API 호출."""
-    api_url = "http://localhost:8080/sqldeck/execute"
+    api_url = "http://localhost:8080/api/sqldeck/execute"
     api_headers = {"Content-Type": "application/json"}
     api_body = {"sqlQuery": ai_answer}
     try:
