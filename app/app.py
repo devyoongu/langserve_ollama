@@ -16,6 +16,7 @@ from sidebar import render_sidebar
 from chain import create_first_chain
 from button import render_buttons
 from initialize import initialize_environment, initialize_session
+import time
 
 # API KEY 정보로드
 load_dotenv()
@@ -38,22 +39,31 @@ def add_message(role, message):
     st.session_state["messages"].append(ChatMessage(role=role, content=message))
 
 
+# API 요청 함수
+def send_chat_log_to_api(chat_logs):
+    url = "http://localhost:8080/api/chat-log"
+    payload = {
+        "chatThreadId": st.session_state.get("chat_thread_id"),
+        "chatLogs": chat_logs,
+    }
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, json=payload, headers=headers)
+    response_data = response.json()
+    if "data" in response_data and "id" in response_data["data"]:
+        st.session_state["chat_thread_id"] = response_data["data"]["id"]
+
+
 # 파일을 캐시 저장(시간이 오래 걸리는 작업을 처리할 예정)
-# 파일 업로드 시 retriever 에서 중복 체크할 예정으로 cache 제거
-# @st.cache_resource(show_spinner="업로드한 파일을 처리 중입니다...")
 def embed_file(file):
-    # 업로드한 파일을 캐시 디렉토리에 저장합니다.
     file_content = file.read()
     file_path = f"./.cache/files/{file.name}"
     with open(file_path, "wb") as f:
         f.write(file_content)
-
     return create_retriever(file_path)
 
 
 # 파일이 업로드 되었을 때
 if uploaded_file:
-    # 파일 업로드 후 retriever 생성 (작업시간이 오래 걸릴 예정...)
     retriever = embed_file(uploaded_file)
     chain = create_first_chain(retriever, model_name=selected_model)
     st.session_state["chain"] = chain
@@ -76,18 +86,18 @@ print_messages()
 user_input = st.chat_input("궁금한 내용을 물어보세요!")
 
 
+# 사용자 입력 처리 함수
 def process_input(input_text, chain):
-
-    # 경고 메시지를 띄우기 위한 빈 영역
     warning_msg = st.empty()
 
     if chain is not None:
-        # 사용자의 입력 처리
+        # 사용자 메시지 출력
         st.chat_message("user").write(input_text)
+        user_message_time = int(time.time())
+
         # 스트리밍 호출
         response = chain.stream(input_text)
         with st.chat_message("assistant"):
-            # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
             container = st.empty()
 
             ai_answer = ""
@@ -98,8 +108,18 @@ def process_input(input_text, chain):
         # 대화 기록 저장
         add_message("user", input_text)
         add_message("assistant", ai_answer)
+
+        # API 요청
+        chat_logs = [
+            {"role": "user", "content": input_text, "createdTime": user_message_time},
+            {
+                "role": "assistant",
+                "content": ai_answer,
+                "createdTime": int(time.time()),
+            },
+        ]
+        send_chat_log_to_api(chat_logs)
     else:
-        # 파일을 업로드 하라는 경고 메시지 출력
         warning_msg.error("파일을 업로드 해주세요.")
 
 
