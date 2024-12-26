@@ -2,12 +2,14 @@ import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import PDFPlumberLoader
 from langchain.vectorstores import FAISS
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 import streamlit as st
+from faiss import IndexFlatL2
 
 # 기록 파일 경로
 EMBEDDINGS_RECORD_FILE = "embedded_files.txt"
-VECTORSTORE_DIR = "vectorstores"  # 벡터스토어 저장 디렉토리
+VECTORSTORE_PATH = "vectorstores/main_vectorstore.faiss"  # 통합 벡터스토어 경로
+EMBEDDING_DIM = 1536  # OpenAI 기본 임베딩 차원
 
 
 def is_file_embedded(file_path):
@@ -26,24 +28,28 @@ def record_embedded_file(file_path):
         f.write(file_path + "\n")
 
 
-def get_vectorstore_path(file_path):
-    """벡터스토어 파일 경로 반환"""
-    file_name = os.path.basename(file_path)
-    return os.path.join(VECTORSTORE_DIR, f"{file_name}.faiss")
-
-
-def load_existing_retriever(file_path):
+def load_existing_retriever():
     """기존 벡터스토어에서 retriever 로드"""
-    vectorstore_path = get_vectorstore_path(file_path)
-    if os.path.exists(vectorstore_path):
+    embeddings = OpenAIEmbeddings()
+    if os.path.exists(VECTORSTORE_PATH):
         vectorstore = FAISS.load_local(
-            vectorstore_path, OpenAIEmbeddings(), allow_dangerous_deserialization=True
+            VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True
         )
-        print(f"[INFO] Loaded existing vectorstore for file '{file_path}'.")
+        print(f"[INFO] Loaded existing vectorstore from '{VECTORSTORE_PATH}'.")
         return vectorstore.as_retriever()
     else:
-        print(f"[WARNING] Vectorstore for file '{file_path}' not found.")
-        return None
+        print(
+            f"[WARNING] Vectorstore '{VECTORSTORE_PATH}' not found. Returning empty retriever."
+        )
+        # 빈 검색기 생성
+        index = IndexFlatL2(EMBEDDING_DIM)
+        docstore = {}
+        return FAISS(
+            index=index,
+            docstore=docstore,
+            index_to_docstore_id={},
+            embedding_function=embeddings,
+        ).as_retriever()
 
 
 def create_retriever(file_path=None):
@@ -52,25 +58,17 @@ def create_retriever(file_path=None):
 
     """파일을 임베딩하고 retriever를 생성합니다."""
     if file_path is None:
-        # 모든 임베딩된 파일 확인
-        if not os.path.exists(EMBEDDINGS_RECORD_FILE):
-            warning_msg.error("파일을 업로드 해주세요.")
-            return None
-
-        with open(EMBEDDINGS_RECORD_FILE, "r") as f:
-            embedded_files = f.read().splitlines()
-
-        if embedded_files:
-            # 첫 번째 임베딩된 파일의 vectorstore 로드
-            first_embedded_file = embedded_files[0]
-            return load_existing_retriever(first_embedded_file)
-        else:
-            warning_msg.error("파일을 업로드 해주세요.")
-            return None
+        # 통합 벡터스토어 로드
+        retriever = load_existing_retriever()
+        if retriever is None:
+            warning_msg.error(
+                "Vectorstore가 존재하지 않습니다. 파일을 업로드 해주세요."
+            )
+        return retriever
 
     # 이미 임베딩된 파일인지 확인
     if is_file_embedded(file_path):
-        return load_existing_retriever(file_path)
+        return load_existing_retriever()
 
     # 단계 1: 문서 로드(Load Documents)
     loader = PDFPlumberLoader(file_path)
@@ -83,19 +81,25 @@ def create_retriever(file_path=None):
     # 단계 3: 임베딩(Embedding) 생성
     embeddings = OpenAIEmbeddings()
 
-    # 단계 4: DB 생성(Create DB) 및 저장
-    vectorstore = FAISS.from_documents(documents=split_documents, embedding=embeddings)
+    # 단계 4: 기존 벡터스토어 로드 또는 새로 생성
+    if os.path.exists(VECTORSTORE_PATH):
+        vectorstore = FAISS.load_local(
+            VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True
+        )
+        vectorstore.add_documents(split_documents)
+    else:
+        vectorstore = FAISS.from_documents(
+            documents=split_documents, embedding=embeddings
+        )
 
     # 벡터스토어 저장
-    os.makedirs(VECTORSTORE_DIR, exist_ok=True)
-    vectorstore_path = get_vectorstore_path(file_path)
-    vectorstore.save_local(vectorstore_path)
-
-    # 단계 5: 검색기(Retriever) 생성
-    retriever = vectorstore.as_retriever()
+    os.makedirs(os.path.dirname(VECTORSTORE_PATH), exist_ok=True)
+    vectorstore.save_local(VECTORSTORE_PATH)
 
     # 파일 기록
     record_embedded_file(file_path)
 
-    print(f"[INFO] File '{file_path}' has been successfully embedded and recorded.")
-    return retriever
+    print(
+        f"[INFO] File '{file_path}' has been successfully embedded and added to the vectorstore."
+    )
+    return vectorstore.as_retriever()
