@@ -13,7 +13,7 @@ def format_doc(document_list):
 
 
 # 체인 생성
-def create_first_chain(retriever, model_name="ollama"):
+def create_first_chain(retriever):
     # 단계 6: 프롬프트 생성(Create Prompt)
     # 프롬프트를 생성합니다.
 

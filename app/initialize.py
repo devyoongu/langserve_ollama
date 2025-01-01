@@ -1,6 +1,16 @@
 import os
 import streamlit as st
 from langchain_core.messages.chat import ChatMessage
+from dotenv import load_dotenv
+from langchain_teddynote import logging
+
+# API KEY 정보로드
+load_dotenv()
+
+# 프로젝트 이름을 입력합니다.
+logging.langsmith("[Project] theDream RAG")
+
+st.title("RAG-YG-Action 프로젝트")
 
 
 def initialize_environment():

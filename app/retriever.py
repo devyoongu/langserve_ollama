@@ -5,6 +5,7 @@ from langchain.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 from faiss import IndexFlatL2
+from chain import create_first_chain
 
 # 기록 파일 경로
 EMBEDDINGS_RECORD_FILE = "embedded_files.txt"
@@ -103,3 +104,23 @@ def create_retriever(file_path=None):
         f"[INFO] File '{file_path}' has been successfully embedded and added to the vectorstore."
     )
     return vectorstore.as_retriever()
+
+
+def default_retriever():
+    retriever = create_retriever()
+    chain = create_first_chain(retriever)
+    st.session_state["chain"] = chain
+
+
+def handling_file(file):
+    retriever = embed_file(file)
+    chain = create_first_chain(retriever)
+    st.session_state["chain"] = chain
+
+
+def embed_file(file):
+    try:
+        return create_retriever(file.name)
+    except Exception as e:
+        print(f"오류 발생 경로: {file.name}")
+        print(f"embed_file 중 오류 발생: {e}")

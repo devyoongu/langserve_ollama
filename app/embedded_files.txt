@@ -1,2 +1,3 @@
 ./.cache/files/WEHAGO서비스제안서0.pdf
 ./.cache/files/SPRI_AI_Brief_2023년12월호_F.pdf
+/Users/yglee/python/langserve_ollama/app/uploads/posicube_hr.pdf
