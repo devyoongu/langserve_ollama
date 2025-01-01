@@ -3,7 +3,7 @@ import shutil
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from retriever import handling_file
+from retriever import handling_file_retriever
 
 WATCH_FOLDER = "./uploads"
 COMPLETED_FOLDER = "./completed"
@@ -24,7 +24,7 @@ def process_file(file_path):
     try:
         # 파일을 열어 파일 객체로 처리
         with open(file_path, "rb") as file:
-            handling_file(file)
+            handling_file_retriever(file)
 
         # 처리 완료된 파일을 완료 폴더로 이동
         completed_path = os.path.join(COMPLETED_FOLDER, os.path.basename(file_path))

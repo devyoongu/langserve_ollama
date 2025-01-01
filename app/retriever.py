@@ -112,7 +112,7 @@ def default_retriever():
     st.session_state["chain"] = chain
 
 
-def handling_file(file):
+def handling_file_retriever(file):
     retriever = embed_file(file)
     chain = create_first_chain(retriever)
     st.session_state["chain"] = chain

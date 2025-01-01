@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from retriever import handling_file_retriever
 
 
 def render_sidebar():
@@ -54,7 +55,8 @@ def render_sidebar():
                 "region": region[0],
                 "name": name,
                 "phoneNumber": phone_number,
-                "dialogues": serialized_messages,
+                # "dialogues": serialized_messages,
+                "chatThreadId": st.session_state.get("chat_thread_id"),
             }
 
             st.write("Form submitted successfully!")
@@ -80,3 +82,6 @@ def render_sidebar():
         # 초기화 버튼이 눌리면...
         if clear_btn:
             st.session_state["messages"] = []
+
+        if uploaded_file:
+            handling_file_retriever(uploaded_file)
