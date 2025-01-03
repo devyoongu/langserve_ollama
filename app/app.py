@@ -1,37 +1,37 @@
+from pyexpat import model
 import streamlit as st
 import requests
-import threading
 from langchain_core.messages.chat import ChatMessage
-from retriever import default_retriever
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_teddynote.prompts import load_prompt
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import ChatOpenAI
+from langchain_teddynote import logging
+from dotenv import load_dotenv
+import os
+from retriever import process_file, process_without_file, default_retriever
 from sidebar import render_sidebar
+from chain import create_first_chain
 from button import render_buttons
 from initialize import initialize_environment, initialize_session
 import time
-from file_watch import (
-    start_file_watch,
-)  # file_watch.py에서 start_file_watch 함수 가져오기
 
+# API KEY 정보로드
+load_dotenv()
 
-# 폴더 감시 스레드 시작 (Streamlit 로드 시 자동 실행)
-def initialize_file_watch():
-    def run_file_watch():
-        start_file_watch()
+st.title("RAG-YG-Action 프로젝트")
 
-    watch_thread = threading.Thread(target=run_file_watch, daemon=True)
-    watch_thread.start()
-    st.session_state["file_watch_initialized"] = True
-
-
-# 폴더 감시 초기화가 되어 있지 않으면 시작
-if "file_watch_initialized" not in st.session_state:
-    initialize_file_watch()
-    st.info("폴더 감시가 시작되었습니다. 새로운 파일을 업로드하세요.")
+# 프로젝트 이름을 입력합니다.
+logging.langsmith("[Project] theDream RAG")
 
 initialize_environment()
 initialize_session()
-render_sidebar()
-default_retriever()
 selected_category = render_buttons()
+
+# 사이드바 렌더링
+uploaded_file, selected_model = render_sidebar()
 
 
 # 새로운 메시지를 추가
@@ -39,7 +39,7 @@ def add_message(role, message):
     st.session_state["messages"].append(ChatMessage(role=role, content=message))
 
 
-# 대화이력 전송 API
+# API 요청 함수
 def send_chat_log_to_api(chat_logs):
     url = "http://localhost:8080/api/chat-log"
     payload = {
@@ -53,10 +53,24 @@ def send_chat_log_to_api(chat_logs):
         st.session_state["chat_thread_id"] = response_data["data"]["id"]
 
 
+# 파일이 업로드 되었을 때
+if uploaded_file:
+    process_file(uploaded_file)
+else:
+    process_without_file()
+
+
 # 이전 대화를 출력
 def print_messages():
     for chat_message in st.session_state["messages"]:
         st.chat_message(chat_message.role).write(chat_message.content)
+
+
+# 이전 대화 기록 출력
+print_messages()
+
+# 사용자의 입력
+user_input = st.chat_input("궁금한 내용을 물어보세요!")
 
 
 # 사용자 입력 처리 함수
@@ -94,13 +108,6 @@ def process_input(input_text, chain):
         send_chat_log_to_api(chat_logs)
     else:
         warning_msg.error("파일을 업로드 해주세요.")
-
-
-# 이전 대화 기록 출력
-print_messages()
-
-# 사용자의 입력
-user_input = st.chat_input("궁금한 내용을 물어보세요!")
 
 
 # 사용자 입력 처리
