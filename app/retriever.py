@@ -5,6 +5,7 @@ from langchain.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 from faiss import IndexFlatL2
+from chain import create_first_chain
 
 # 기록 파일 경로
 EMBEDDINGS_RECORD_FILE = "embedded_files.txt"
@@ -50,6 +51,17 @@ def load_existing_retriever():
             index_to_docstore_id={},
             embedding_function=embeddings,
         ).as_retriever()
+
+
+def default_retriever():
+    # 경고 메시지를 띄우기 위한 빈 영역
+    warning_msg = st.empty()
+
+    # 통합 벡터스토어 로드
+    retriever = load_existing_retriever()
+    if retriever is None:
+        warning_msg.error("Vectorstore가 존재하지 않습니다. 파일을 업로드 해주세요.")
+    return retriever
 
 
 def create_retriever(file_path=None):
@@ -103,3 +115,25 @@ def create_retriever(file_path=None):
         f"[INFO] File '{file_path}' has been successfully embedded and added to the vectorstore."
     )
     return vectorstore.as_retriever()
+
+
+def process_file(uploaded_file):
+    file_path = save_file(uploaded_file)
+    retriever = create_retriever(file_path)
+    chain = create_first_chain(retriever)
+    st.session_state["chain"] = chain
+
+
+def process_without_file():
+    retriever = default_retriever()
+    chain = create_first_chain(retriever)
+    st.session_state["chain"] = chain
+
+
+# 파일을 캐시 저장(시간이 오래 걸리는 작업을 처리할 예정)
+def save_file(file):
+    file_content = file.read()
+    file_path = f"./upload/{file.name}"
+    with open(file_path, "wb") as f:
+        f.write(file_content)
+    return file_path

@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from dotenv import load_dotenv
 import os
-from retriever import create_retriever
+from retriever import process_file, process_without_file, default_retriever
 from sidebar import render_sidebar
 from chain import create_first_chain
 from button import render_buttons
@@ -54,23 +54,32 @@ def send_chat_log_to_api(chat_logs):
 
 
 # 파일을 캐시 저장(시간이 오래 걸리는 작업을 처리할 예정)
-def embed_file(file):
+def save_file(file):
     file_content = file.read()
-    file_path = f"./.cache/files/{file.name}"
+    file_path = f"./upload/{file.name}"
     with open(file_path, "wb") as f:
         f.write(file_content)
-    return create_retriever(file_path)
+    return file_path
+
+
+# def process_file(uploaded_file):
+#     file_path = save_file(uploaded_file)
+#     retriever = create_retriever(file_path)
+#     chain = create_first_chain(retriever, model_name=selected_model)
+#     st.session_state["chain"] = chain
+
+
+# def process_without_file():
+#     retriever = default_retriever()
+#     chain = create_first_chain(retriever, model_name=selected_model)
+#     st.session_state["chain"] = chain
 
 
 # 파일이 업로드 되었을 때
 if uploaded_file:
-    retriever = embed_file(uploaded_file)
-    chain = create_first_chain(retriever, model_name=selected_model)
-    st.session_state["chain"] = chain
+    process_file(uploaded_file)
 else:
-    retriever = create_retriever()
-    chain = create_first_chain(retriever, model_name=selected_model)
-    st.session_state["chain"] = chain
+    process_without_file()
 
 
 # 이전 대화를 출력
