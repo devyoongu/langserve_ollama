@@ -53,28 +53,6 @@ def send_chat_log_to_api(chat_logs):
         st.session_state["chat_thread_id"] = response_data["data"]["id"]
 
 
-# 파일을 캐시 저장(시간이 오래 걸리는 작업을 처리할 예정)
-def save_file(file):
-    file_content = file.read()
-    file_path = f"./upload/{file.name}"
-    with open(file_path, "wb") as f:
-        f.write(file_content)
-    return file_path
-
-
-# def process_file(uploaded_file):
-#     file_path = save_file(uploaded_file)
-#     retriever = create_retriever(file_path)
-#     chain = create_first_chain(retriever, model_name=selected_model)
-#     st.session_state["chain"] = chain
-
-
-# def process_without_file():
-#     retriever = default_retriever()
-#     chain = create_first_chain(retriever, model_name=selected_model)
-#     st.session_state["chain"] = chain
-
-
 # 파일이 업로드 되었을 때
 if uploaded_file:
     process_file(uploaded_file)

@@ -6,6 +6,7 @@ from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 from faiss import IndexFlatL2
 from chain import create_first_chain
+from fastapi import UploadFile
 
 # 기록 파일 경로
 EMBEDDINGS_RECORD_FILE = "embedded_files.txt"
@@ -118,6 +119,7 @@ def create_retriever(file_path=None):
 
 
 def process_file(uploaded_file):
+    print(f"[INFO] uploaded_file is '{uploaded_file}'.")
     file_path = save_file(uploaded_file)
     retriever = create_retriever(file_path)
     chain = create_first_chain(retriever)
@@ -136,4 +138,32 @@ def save_file(file):
     file_path = f"./upload/{file.name}"
     with open(file_path, "wb") as f:
         f.write(file_content)
+    return file_path
+
+
+async def process_file_fastapi(uploaded_file):
+    """
+    FastAPI용 파일 처리 메서드
+    """
+    print(f"[INFO] uploaded_file is '{uploaded_file.filename}'.")
+    file_path = await save_file_fastapi(uploaded_file)
+    retriever = create_retriever(file_path)
+    chain = create_first_chain(retriever)
+    print("[INFO] Chain created successfully.")
+    # FastAPI는 st.session_state가 없으므로 필요하다면 별도 상태 관리 구현 필요
+    # !! chain 을 session 에 굳이 등록할 필요가 없음 vector db에만 저장하면 기존에 설정된 chain 과 retriever 를 사용하면 됨
+    # st.session_state["chain"] = chain
+    return chain
+
+
+async def save_file_fastapi(file: UploadFile):
+    """
+    FastAPI용 파일 저장 메서드
+    """
+    file_content = await file.read()  # 비동기 파일 읽기
+    file_path = f"./upload/{file.filename}"  # file.filename 사용
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)  # 디렉토리 생성
+    with open(file_path, "wb") as f:
+        f.write(file_content)
+    print(f"[INFO] File saved at '{file_path}'.")
     return file_path
