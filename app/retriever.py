@@ -65,20 +65,7 @@ def default_retriever():
     return retriever
 
 
-def create_retriever(file_path=None):
-    # 경고 메시지를 띄우기 위한 빈 영역
-    warning_msg = st.empty()
-
-    """파일을 임베딩하고 retriever를 생성합니다."""
-    if file_path is None:
-        # 통합 벡터스토어 로드
-        retriever = load_existing_retriever()
-        if retriever is None:
-            warning_msg.error(
-                "Vectorstore가 존재하지 않습니다. 파일을 업로드 해주세요."
-            )
-        return retriever
-
+def create_retriever(file_path):
     # 이미 임베딩된 파일인지 확인
     if is_file_embedded(file_path):
         return load_existing_retriever()
