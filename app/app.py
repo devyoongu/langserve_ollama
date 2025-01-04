@@ -31,7 +31,7 @@ initialize_session()
 selected_category = render_buttons()
 
 # 사이드바 렌더링
-uploaded_file, selected_model = render_sidebar()
+uploaded_file = render_sidebar()
 
 
 # 새로운 메시지를 추가

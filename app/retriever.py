@@ -134,13 +134,8 @@ async def process_file_fastapi(uploaded_file):
     """
     print(f"[INFO] uploaded_file is '{uploaded_file.filename}'.")
     file_path = await save_file_fastapi(uploaded_file)
-    retriever = create_retriever(file_path)
-    chain = create_first_chain(retriever)
+    create_retriever(file_path)
     print("[INFO] Chain created successfully.")
-    # FastAPI는 st.session_state가 없으므로 필요하다면 별도 상태 관리 구현 필요
-    # !! chain 을 session 에 굳이 등록할 필요가 없음 vector db에만 저장하면 기존에 설정된 chain 과 retriever 를 사용하면 됨
-    # st.session_state["chain"] = chain
-    return chain
 
 
 async def save_file_fastapi(file: UploadFile):

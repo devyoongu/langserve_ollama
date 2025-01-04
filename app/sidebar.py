@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-from retriever import handling_file_retriever
 
 
 def render_sidebar():
@@ -11,9 +10,6 @@ def render_sidebar():
 
         # 파일 업로드
         uploaded_file = st.file_uploader("파일 업로드", type=["pdf"])
-
-        # # 모델 선택 메뉴
-        # selected_model = st.selectbox("LLM 선택", ["ollama", "xionic"], index=0)
 
         # 폼 UI
         st.write("상담이 필요한 경우 연락처를 남겨주세요")
@@ -44,18 +40,11 @@ def render_sidebar():
         if submit_button:
             st.session_state["form_submitted"] = True
 
-            # ChatMessage 객체를 직렬화 가능한 딕셔너리로 변환
-            serialized_messages = [
-                {"role": message.role, "content": message.content}
-                for message in st.session_state["messages"]
-            ]
-
             # 세션 상태에 저장
             st.session_state["form_data"] = {
                 "region": region[0],
                 "name": name,
                 "phoneNumber": phone_number,
-                # "dialogues": serialized_messages,
                 "chatThreadId": st.session_state.get("chat_thread_id"),
             }
 
@@ -83,5 +72,4 @@ def render_sidebar():
         if clear_btn:
             st.session_state["messages"] = []
 
-        if uploaded_file:
-            handling_file_retriever(uploaded_file)
+        return uploaded_file

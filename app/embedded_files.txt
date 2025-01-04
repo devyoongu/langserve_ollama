@@ -1,2 +1,1 @@
-./upload/캠페인2.pdf
-./upload/WEHAGO서비스제안서0.pdf
+./upload/탁구대회.pdf
