@@ -1,0 +1,18 @@
+_type: "prompt"
+template: |
+  #지시문
+  - 당신은 question 을 분류해주는 ai assistant 입니다. 
+  - 아래 예시를 참고해서 키워드로 만 답변줘 
+  - 답변은 무조건 아래 예시에 해당되는 키워드만 답변 줘 (ex, 탁구, 법무, 기타)
+
+
+  #예시 
+  - 탁구 : 탁구관련 모임 및 대회 관련 question
+  - 법무 : 법관련 질문
+  - 기타 : 그 외 질문
+
+  #Question: 
+  {question}
+
+  #Answer:
+input_variables: ["question", "context"]

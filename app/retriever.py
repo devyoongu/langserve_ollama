@@ -5,7 +5,7 @@ from langchain.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 from faiss import IndexFlatL2
-from chain import create_first_chain
+from ragChain import get_rag_chain
 from fastapi import UploadFile
 
 # 기록 파일 경로
@@ -24,10 +24,14 @@ def is_file_embedded(file_path):
     return file_path in embedded_files
 
 
-def record_embedded_file(file_path):
-    """임베딩된 파일 기록"""
+def record_embedded_file(file_path, vector_meta_id):
+    """
+    임베딩된 파일과 관련 메타 ID를 기록합니다.
+    """
     with open(EMBEDDINGS_RECORD_FILE, "a") as f:
-        f.write(file_path + "\n")
+        f.write(
+            f"{file_path},{vector_meta_id}\n"
+        )  # 파일 경로와 메타 ID를 CSV 형식으로 저장
 
 
 def load_existing_retriever():
@@ -82,6 +86,10 @@ def create_retriever(file_path):
     embeddings = OpenAIEmbeddings()
 
     # 단계 4: 기존 벡터스토어 로드 또는 새로 생성
+    vector_meta_id = generate_vector_meta_id(file_path)
+    for doc in split_documents:
+        doc.metadata["vector_meta_id"] = vector_meta_id  # 메타 ID 추가
+
     if os.path.exists(VECTORSTORE_PATH):
         vectorstore = FAISS.load_local(
             VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True
@@ -97,7 +105,7 @@ def create_retriever(file_path):
     vectorstore.save_local(VECTORSTORE_PATH)
 
     # 파일 기록
-    record_embedded_file(file_path)
+    record_embedded_file(file_path, vector_meta_id)
 
     print(
         f"[INFO] File '{file_path}' has been successfully embedded and added to the vectorstore."
@@ -105,17 +113,33 @@ def create_retriever(file_path):
     return vectorstore.as_retriever()
 
 
+def generate_vector_meta_id(file_path):
+    """
+    벡터스토어에서 메타 ID를 생성합니다.
+    """
+    # 간단히 해시값으로 ID 생성
+    import hashlib
+
+    vector_meta_id = hashlib.sha256(
+        f"{file_path}{VECTORSTORE_PATH}".encode()
+    ).hexdigest()
+    print(f"[INFO] Generated vector meta ID: {vector_meta_id}")
+    return vector_meta_id
+
+
 def process_file(uploaded_file):
     print(f"[INFO] uploaded_file is '{uploaded_file}'.")
     file_path = save_file(uploaded_file)
     retriever = create_retriever(file_path)
-    chain = create_first_chain(retriever)
+    st.session_state["retriever"] = retriever
+    chain = get_rag_chain()
     st.session_state["chain"] = chain
 
 
 def process_without_file():
     retriever = default_retriever()
-    chain = create_first_chain(retriever)
+    st.session_state["retriever"] = retriever
+    chain = get_rag_chain()
     st.session_state["chain"] = chain
 
 

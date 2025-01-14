@@ -1,1 +1,2 @@
-./upload/탁구대회.pdf
+./upload/탁구대회.pdf,d40cde6f71777f45e0ab6a2b7d6183e1a6c2b4a19bbb3f193a0129203dbd6eb9
+./upload/탁구대회.pdf,d40cde6f71777f45e0ab6a2b7d6183e1a6c2b4a19bbb3f193a0129203dbd6eb9

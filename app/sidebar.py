@@ -8,6 +8,8 @@ def render_sidebar():
         # 초기화 버튼 생성
         clear_btn = st.button("대화 초기화")
 
+        delete_btn = st.button("메타 삭제")
+
         # 파일 업로드
         uploaded_file = st.file_uploader("파일 업로드", type=["pdf"])
 

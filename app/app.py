@@ -10,13 +10,13 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from dotenv import load_dotenv
-import os
-from retriever import process_file, process_without_file, default_retriever
+from retriever import process_file, process_without_file
+from routingChain import get_router_chain
 from sidebar import render_sidebar
-from chain import create_first_chain
 from button import render_buttons
 from initialize import initialize_environment, initialize_session
 import time
+
 
 # API KEY 정보로드
 load_dotenv()
@@ -58,6 +58,7 @@ if uploaded_file:
     process_file(uploaded_file)
 else:
     process_without_file()
+    get_router_chain()
 
 
 # 이전 대화를 출력
@@ -74,46 +75,71 @@ user_input = st.chat_input("궁금한 내용을 물어보세요!")
 
 
 # 사용자 입력 처리 함수
-def process_input(input_text, chain):
-    warning_msg = st.empty()
+def process_input(input_text):
+    # warning_msg = st.empty()
 
-    if chain is not None:
+    router_chain = st.session_state.get("router_chain")
+
+    if router_chain is not None:
         # 사용자 메시지 출력
         st.chat_message("user").write(input_text)
         user_message_time = int(time.time())
 
-        # 스트리밍 호출
-        response = chain.stream(input_text)
+        # invoke 호출로 응답 받기
+        response = router_chain.stream(input_text)
+        print(f"Processing response: {response}")
+
         with st.chat_message("assistant"):
             container = st.empty()
-
             ai_answer = ""
+
+            # 스트리밍 데이터 처리
             for token in response:
                 ai_answer += token
                 container.markdown(ai_answer)
 
         # 대화 기록 저장
         add_message("user", input_text)
-        add_message("assistant", ai_answer)
+        add_message("assistant", response)
 
         # API 요청
-        chat_logs = [
-            {"role": "user", "content": input_text, "createdTime": user_message_time},
-            {
-                "role": "assistant",
-                "content": ai_answer,
-                "createdTime": int(time.time()),
-            },
-        ]
-        send_chat_log_to_api(chat_logs)
-    else:
-        warning_msg.error("파일을 업로드 해주세요.")
+        # chat_logs = [
+        #     {"role": "user", "content": input_text, "createdTime": user_message_time},
+        #     {
+        #         "role": "assistant",
+        #         "content": response,
+        #         "createdTime": int(time.time()),
+        #     },
+        # ]
+        # send_chat_log_to_api(chat_logs)
+
+
+def process_button(input_text):
+
+    rag_chain = st.session_state.get("chain")
+
+    # 사용자 메시지 출력
+    st.chat_message("user").write(input_text)
+
+    # 스트리밍 호출
+    response = rag_chain.stream(input_text)
+    with st.chat_message("assistant"):
+        container = st.empty()
+
+        ai_answer = ""
+        for token in response:
+            ai_answer += token
+            container.markdown(ai_answer)
+
+    # 대화 기록 저장
+    add_message("user", input_text)
+    add_message("assistant", ai_answer)
 
 
 # 사용자 입력 처리
 if user_input:
-    process_input(user_input, st.session_state.get("chain"))
+    process_input(user_input)
 
 # 버튼 선택 처리
 if selected_category:
-    process_input(selected_category, st.session_state.get("chain"))
+    process_button(selected_category)
