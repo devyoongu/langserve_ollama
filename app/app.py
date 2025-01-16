@@ -16,6 +16,7 @@ from sidebar import render_sidebar
 from button import render_buttons
 from initialize import initialize_environment, initialize_session
 import time
+from memoryChain import create_memory_chain
 
 
 # API KEY 정보로드
@@ -80,38 +81,37 @@ def process_input(input_text):
 
     router_chain = st.session_state.get("router_chain")
 
-    if router_chain is not None:
-        # 사용자 메시지 출력
-        st.chat_message("user").write(input_text)
-        user_message_time = int(time.time())
+    # 사용자 메시지 출력
+    st.chat_message("user").write(input_text)
+    user_message_time = int(time.time())
 
-        # invoke 호출로 응답 받기
-        response = router_chain.stream(input_text)
-        print(f"Processing response: {response}")
+    # invoke 호출로 응답 받기
+    response = router_chain.stream(input_text)
+    print(f"Processing response: {response}")
 
-        with st.chat_message("assistant"):
-            container = st.empty()
-            ai_answer = ""
+    with st.chat_message("assistant"):
+        container = st.empty()
+        ai_answer = ""
 
-            # 스트리밍 데이터 처리
-            for token in response:
-                ai_answer += token
-                container.markdown(ai_answer)
+        # 스트리밍 데이터 처리
+        for token in response:
+            ai_answer += token
+            container.markdown(ai_answer)
 
-        # 대화 기록 저장
-        add_message("user", input_text)
-        add_message("assistant", response)
+    # 대화 기록 저장
+    add_message("user", input_text)
+    add_message("assistant", ai_answer)
 
-        # API 요청
-        # chat_logs = [
-        #     {"role": "user", "content": input_text, "createdTime": user_message_time},
-        #     {
-        #         "role": "assistant",
-        #         "content": response,
-        #         "createdTime": int(time.time()),
-        #     },
-        # ]
-        # send_chat_log_to_api(chat_logs)
+    # API 요청
+    # chat_logs = [
+    #     {"role": "user", "content": input_text, "createdTime": user_message_time},
+    #     {
+    #         "role": "assistant",
+    #         "content": response,
+    #         "createdTime": int(time.time()),
+    #     },
+    # ]
+    # send_chat_log_to_api(chat_logs)
 
 
 def process_button(input_text):
@@ -136,9 +136,37 @@ def process_button(input_text):
     add_message("assistant", ai_answer)
 
 
+def process_memory_input(input_text):
+
+    chain = create_memory_chain()
+
+    # 사용자 메시지 출력
+    st.chat_message("user").write(input_text)
+
+    # 스트리밍 호출
+    response = chain.stream(
+        # 질문 입력
+        {"question": user_input},
+        # 세션 ID 기준으로 대화를 기록합니다.
+        config={"configurable": {"session_id": "session_id"}},
+    )
+    with st.chat_message("assistant"):
+        container = st.empty()
+
+        ai_answer = ""
+        for token in response:
+            ai_answer += token
+            container.markdown(ai_answer)
+
+    # 대화 기록 저장
+    add_message("user", input_text)
+    add_message("assistant", ai_answer)
+
+
 # 사용자 입력 처리
 if user_input:
-    process_input(user_input)
+    # process_input(user_input)
+    process_memory_input(user_input)
 
 # 버튼 선택 처리
 if selected_category:

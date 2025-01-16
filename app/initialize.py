@@ -34,6 +34,9 @@ def initialize_environment():
         st.session_state["chain"] = None
         st.session_state["contact_data"] = {"name": "", "phone": "", "submitted": False}
 
+    if "store" not in st.session_state:
+        st.session_state["store"] = {}
+
 
 def initialize_session():
     """
