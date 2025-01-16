@@ -11,12 +11,15 @@ from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from dotenv import load_dotenv
 from retriever import process_file, process_without_file
-from routingChain import get_router_chain
+
+# from routingChain import get_router_chain
+
+from memoryRoutingChain import get_router_chain
 from sidebar import render_sidebar
 from button import render_buttons
 from initialize import initialize_environment, initialize_session
 import time
-from memoryChain import create_memory_chain
+from memoryRagChain import create_rag_chain
 
 
 # API KEY 정보로드
@@ -138,17 +141,16 @@ def process_button(input_text):
 
 def process_memory_input(input_text):
 
-    chain = create_memory_chain()
+    # chain = create_memory_chain()
+    chain = st.session_state.get("router_chain")
 
     # 사용자 메시지 출력
     st.chat_message("user").write(input_text)
 
     # 스트리밍 호출
     response = chain.stream(
-        # 질문 입력
-        {"question": user_input},
-        # 세션 ID 기준으로 대화를 기록합니다.
-        config={"configurable": {"session_id": "session_id"}},
+        {"question": input_text},
+        config={"configurable": {"session_id": "12345"}},
     )
     with st.chat_message("assistant"):
         container = st.empty()
@@ -170,4 +172,5 @@ if user_input:
 
 # 버튼 선택 처리
 if selected_category:
-    process_button(selected_category)
+    # process_button(selected_category)
+    process_memory_input(selected_category)

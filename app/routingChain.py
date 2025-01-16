@@ -6,6 +6,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
 from langchain_core.runnables import RunnablePassthrough
 from ragChain import get_route_rag_chain
+from memoryChain import create_memory_chain
+from operator import itemgetter
 
 # Initialize LLM
 # llm = ChatOpenAI(model="gpt-4o-mini", stream=True)
@@ -63,7 +65,8 @@ def route(info):
 
     if "탁구" in info["topic"].lower():
         print("Routing to rag_chain from session_state (탁구 관련)")
-        return get_route_rag_chain()
+        # return get_route_rag_chain()
+        return create_memory_chain()
     elif "법무" in info["topic"].lower():
         print("Routing to law science_chain")
         return science_chain
@@ -75,8 +78,8 @@ def route(info):
 router_chain = (
     {
         "topic": chain,  # chain 실행 결과를 적절히 변환
-        # "question": itemgetter("question"),
-        "question": RunnablePassthrough(),
+        "question": itemgetter("question"),
+        # "question": RunnablePassthrough(),
     }
     | RunnableLambda(route)
     | StrOutputParser()

@@ -9,6 +9,7 @@ from operator import itemgetter
 from langchain_core.runnables.utils import AddableDict
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_core.runnables import RunnableLambda
+from langchain_openai import ChatOpenAI
 
 
 # retriever 를 통해 검색된 document_list는 메타정보까지 모두 포함되어 있기 때문에 format_doc을 체이닝으로 추가하여 content 내용만 연결된 String 값으로 리턴
@@ -31,9 +32,10 @@ def get_rag_chain():
 
     # 단계 7: 언어모델(LLM) 생성
     # Ollama 모델을 불러옵니다.
-    llm = ChatOllama(model="EEVE-Korean-10.8B:latest", temperature=0)
+    # llm = ChatOllama(model="EEVE-Korean-10.8B:latest", temperature=0)
+    llm = ChatOpenAI(model_name="gpt-4o-mini")
 
-    print(f"[INFO] retriever is '{retriever}'")
+    # print(f"[INFO] retriever is '{retriever}'")
 
     # 단계 8: 체인(Chain) 생성
     chain = (
@@ -63,14 +65,14 @@ def get_route_rag_chain():
     prompt = load_prompt("prompts/pdf-rag-ollama.yaml", encoding="utf-8")
 
     # LLM 생성
-    llm = ChatOllama(model="EEVE-Korean-10.8B:latest", temperature=0)
+    # llm = ChatOllama(model="EEVE-Korean-10.8B:latest", temperature=0)
+    llm = ChatOpenAI(model_name="gpt-4o-mini")
 
     # 체인 구성
     # lambda x 실행 시점에 retriever와 question을 기반으로 필요한 데이터를 동적으로 생성할 수 있습니다.
     # lambda x 는 Runnable 체인 안에서 입력 데이터를 처리하기 위한 파이썬 내부 익명 함수
     chain = (
         {
-            # "context": lambda x: ensure_string(retriever),  # 문자열로 변환 보장
             "context": lambda x: fetch_context(x["question"], retriever),
             "question": itemgetter("question"),
         }
