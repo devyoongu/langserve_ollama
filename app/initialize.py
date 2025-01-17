@@ -3,6 +3,7 @@ import streamlit as st
 from langchain_core.messages.chat import ChatMessage
 from dotenv import load_dotenv
 from langchain_teddynote import logging
+from llmApi import send_chat_log_to_api
 
 # API KEY 정보로드
 load_dotenv()
@@ -36,6 +37,10 @@ def initialize_environment():
 
     if "store" not in st.session_state:
         st.session_state["store"] = {}
+
+    if "chat_thread_id" not in st.session_state:
+        chat_logs = []
+        send_chat_log_to_api(chat_logs)
 
 
 def initialize_session():

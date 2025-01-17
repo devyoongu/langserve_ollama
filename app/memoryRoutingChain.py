@@ -5,19 +5,15 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
 from langchain_core.runnables import RunnablePassthrough
-
-# from ragChain import get_route_rag_chain
-
 from memoryRagChain import create_rag_chain
 from memoryGeneralChain import create_general_chain
 from operator import itemgetter
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from chainUtils import get_session_history
-
+from SqlChain import get_sql_chain
 
 # Initialize LLM
-# llm = ChatOpenAI(model="gpt-4o-mini", stream=True)
 llm = ChatOpenAI(model="gpt-3.5-turbo", stream=True)
 
 prompt = load_prompt("prompts/00_route.yaml", encoding="utf-8")
@@ -60,9 +56,10 @@ def route(info):
         print("Routing to rag_chain from session_state (탁구 관련)")
         # return get_route_rag_chain()
         return create_rag_chain()
-    elif "법무" in info["topic"].lower():
-        print("Routing to law science_chain")
-        return general_chain
+    elif "조직도" in info["topic"].lower():
+        print("Routing to 조직도 chain")
+        # return general_chain
+        return get_sql_chain()
     else:
         print("Routing to general_chain")
         return create_general_chain()
@@ -76,7 +73,7 @@ router_chain = (
         "chat_history": itemgetter("chat_history"),
     }
     | RunnableLambda(route)
-    | StrOutputParser()
+    | StrOutputParser()  # 필요 없을듯 여기서 공통 LLM을 여기서 넣어야할듯
 )
 
 route_with_history = RunnableWithMessageHistory(

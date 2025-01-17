@@ -11,15 +11,12 @@ from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from dotenv import load_dotenv
 from retriever import process_file, process_without_file
-
-# from routingChain import get_router_chain
-
 from memoryRoutingChain import get_router_chain
 from sidebar import render_sidebar
 from button import render_buttons
 from initialize import initialize_environment, initialize_session
 import time
-from memoryRagChain import create_rag_chain
+from llmApi import send_chat_log_to_api
 
 
 # API KEY 정보로드
@@ -41,20 +38,6 @@ uploaded_file = render_sidebar()
 # 새로운 메시지를 추가
 def add_message(role, message):
     st.session_state["messages"].append(ChatMessage(role=role, content=message))
-
-
-# API 요청 함수
-def send_chat_log_to_api(chat_logs):
-    url = "http://localhost:8080/api/chat-log"
-    payload = {
-        "chatThreadId": st.session_state.get("chat_thread_id"),
-        "chatLogs": chat_logs,
-    }
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(url, json=payload, headers=headers)
-    response_data = response.json()
-    if "data" in response_data and "id" in response_data["data"]:
-        st.session_state["chat_thread_id"] = response_data["data"]["id"]
 
 
 # 파일이 업로드 되었을 때
@@ -83,14 +66,19 @@ def process_input(input_text):
     # warning_msg = st.empty()
 
     router_chain = st.session_state.get("router_chain")
+    chat_thread_id = st.session_state.get("chat_thread_id")
+
+    print(f"session chat_thread_id is {chat_thread_id}")
 
     # 사용자 메시지 출력
     st.chat_message("user").write(input_text)
     user_message_time = int(time.time())
 
     # invoke 호출로 응답 받기
-    response = router_chain.stream(input_text)
-    print(f"Processing response: {response}")
+    response = router_chain.stream(
+        {"question": input_text},
+        config={"configurable": {"session_id": chat_thread_id}},
+    )
 
     with st.chat_message("assistant"):
         container = st.empty()
@@ -106,15 +94,15 @@ def process_input(input_text):
     add_message("assistant", ai_answer)
 
     # API 요청
-    # chat_logs = [
-    #     {"role": "user", "content": input_text, "createdTime": user_message_time},
-    #     {
-    #         "role": "assistant",
-    #         "content": response,
-    #         "createdTime": int(time.time()),
-    #     },
-    # ]
-    # send_chat_log_to_api(chat_logs)
+    chat_logs = [
+        {"role": "user", "content": input_text, "createdTime": user_message_time},
+        {
+            "role": "assistant",
+            "content": ai_answer,
+            "createdTime": int(time.time()),
+        },
+    ]
+    send_chat_log_to_api(chat_logs)
 
 
 def process_button(input_text):
@@ -139,38 +127,10 @@ def process_button(input_text):
     add_message("assistant", ai_answer)
 
 
-def process_memory_input(input_text):
-
-    # chain = create_memory_chain()
-    chain = st.session_state.get("router_chain")
-
-    # 사용자 메시지 출력
-    st.chat_message("user").write(input_text)
-
-    # 스트리밍 호출
-    response = chain.stream(
-        {"question": input_text},
-        config={"configurable": {"session_id": "12345"}},
-    )
-    with st.chat_message("assistant"):
-        container = st.empty()
-
-        ai_answer = ""
-        for token in response:
-            ai_answer += token
-            container.markdown(ai_answer)
-
-    # 대화 기록 저장
-    add_message("user", input_text)
-    add_message("assistant", ai_answer)
-
-
 # 사용자 입력 처리
 if user_input:
-    # process_input(user_input)
-    process_memory_input(user_input)
+    process_input(user_input)
 
 # 버튼 선택 처리
 if selected_category:
-    # process_button(selected_category)
-    process_memory_input(selected_category)
+    process_input(selected_category)

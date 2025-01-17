@@ -33,8 +33,6 @@ def create_general_chain():
     llm = ChatOpenAI(model_name="gpt-4o-mini")
 
     # 일반 Chain 생성
-    # chain = prompt | llm | StrOutputParser()
-    # 단계 8: 체인(Chain) 생성
     chain = (
         {
             "question": itemgetter("question"),
