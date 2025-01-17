@@ -14,8 +14,8 @@ def render_buttons():
         if st.button("어떤 탁구채를 사용해?"):
             selected_category = "어떤 탁구채를 사용해?"
     with col2:
-        if st.button("we톡에 대해 알려줘"):
-            selected_category = "we톡에 대해 알려줘"
+        if st.button("직원 리스트를 알려줘"):
+            selected_category = "직원 리스트를 알려줘"
     with col3:
         if st.button("안녕 내 이름은 테디야"):
             selected_category = "안녕 내 이름은 테디야"

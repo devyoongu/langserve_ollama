@@ -21,7 +21,7 @@ def format_doc(document_list):
 
 
 def fetch_context(question, retriever):
-    # print(f"fetch_context question is {question}")
+    print(f"Question is: {question}")
     documents = retriever.get_relevant_documents(question)
     return "\n\n".join(doc.page_content for doc in documents)
 
@@ -53,51 +53,30 @@ def get_first_chain():
     return chain
 
 
-# 1차 체인 생성
-def get_second_chain():
-    # 2차 체인에 사용할 프롬프트 및 모델 설정
+def callSqlApi(info):
+    sql_result = info["sql_result"]
+    api_result = call_external_api(sql_result)
 
-    # 2차 체인 생성
+    formatted_result = {
+        "data": api_result.get("data", "Fallback data"),  # API 결과의 'data'를 매핑
+        "question": info.get("question", "Default question"),  # 원래 질문을 포함
+    }
+    return formatted_result
+
+
+def get_sql_chain():
+
+    firstChain = get_first_chain()
+
+    # 두 번째 체인 생성
     second_chain = (
         {
+            "sql_result": firstChain,
             "question": RunnablePassthrough(),
-            "data": RunnablePassthrough(),
         }
-        | second_chain
-        | llm
-        | StrOutputParser()
-    )
-    return second_chain
-
-
-def route(info):
-    if not isinstance(info, dict):
-        print(f"Invalid input for route: {info}")
-        raise ValueError("Input to route function must be a dictionary.")
-
-    api_result = call_external_api(info["sqlQuery"])
-
-    second_chain = (
-        {
-            "question": RunnablePassthrough(),
-            "data": api_result.get("data", "Fallback question"),
-        }
+        | RunnableLambda(callSqlApi)
         | secondPrompt
         | llm
         | StrOutputParser()
     )
-
-    return second_chain
-
-
-def get_sql_chain():
-    second_chain = (
-        {
-            "sqlQuery": get_first_chain(),  # chain 실행 결과를 적절히 변환 lambda x: 추가?
-            "question": itemgetter("question"),
-        }
-        | RunnableLambda(route)
-        | StrOutputParser()
-    )
-
     return second_chain
