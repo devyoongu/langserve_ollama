@@ -7,6 +7,7 @@ template: |
   - 아래 '예시' 처럼 조회된 컬럼은 컬럼명을 보고 별칭을 달아줘
   - 조회된 날짜는 항상 YYYY-MM-DD 형식으로 출력되게 해줘
   - sql 을 markdown 형태로 감싸서 주지 말고 쿼리 자체만 답변 줘
+  - created_date, modified_date 는 조회 컬럼에 포함시키지 마
 
   #예시 
   - question : 회원별 주문 리스트를 알려줘

@@ -79,4 +79,12 @@ def get_sql_chain():
         | llm
         | StrOutputParser()
     )
-    return second_chain
+
+    history_chain = RunnableWithMessageHistory(
+        second_chain,
+        get_session_history,  # 세션 기록을 가져오는 함수
+        input_messages_key="question",  # 사용자의 질문이 템플릿 변수에 들어갈 key
+        history_messages_key="chat_history",  # 기록 메시지의 키
+    )
+
+    return history_chain

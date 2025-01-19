@@ -36,28 +36,18 @@ general_prompt = PromptTemplate.from_template(
 chain = prompt | llm | StrOutputParser()  # 문자열 출력 파서를 사용합니다.
 
 
-general_chain = (
-    {
-        "question": itemgetter("question"),
-        "chat_history": itemgetter("chat_history"),
-    }
-    | general_prompt
-    | llm
-)
-
-
 def route(info):
     # 입력 데이터 형식 검증
     if not isinstance(info, dict):
         print(f"Invalid input for route: {info}")
         raise ValueError("Input to route function must be a dictionary.")
 
-    if "탁구" in info["topic"].lower():
-        print("Routing to rag_chain from session_state (탁구 관련)")
+    if "법무법인" in info["topic"].lower():
+        print("Routing to rag_chain from session_state (법무법인 관련)")
         # return get_route_rag_chain()
         return create_rag_chain()
-    elif "조직도" in info["topic"].lower():
-        print("Routing to 조직도 chain")
+    elif "연락처" in info["topic"].lower():
+        print("Routing to 연락처 chain")
         # return general_chain
         return get_sql_chain()
     else:
