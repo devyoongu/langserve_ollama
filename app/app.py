@@ -7,11 +7,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from dotenv import load_dotenv
 from retriever import process_file, load_existing_retriever
-from memoryRoutingChain import get_router_chain
+from routingChain import get_router_chain
 from sidebar import render_sidebar
 from button import render_buttons
 from initialize import initialize_environment, initialize_session

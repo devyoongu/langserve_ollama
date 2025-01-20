@@ -11,8 +11,8 @@ def render_buttons():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        if st.button("배상책임 담당자 연락처를 알려줘"):
-            selected_category = "배상책임 담당자 연락처를 알려줘"
+        if st.button("공정거래 담당자 연락처를 알려줘"):
+            selected_category = "공정거래 담당자 연락처를 알려줘"
     with col2:
         if st.button("민사소송 담당자 연락처 알려줘"):
             selected_category = "민사소송 담당자 연락처 알려줘"

@@ -5,56 +5,35 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
 from langchain_core.runnables import RunnablePassthrough
-from ragChain import get_route_rag_chain
-from memoryChain import create_memory_chain
+from ragChain import create_rag_chain
+from generalChain import create_general_chain
 from operator import itemgetter
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
+from chainUtils import get_session_history
+from SqlChain import get_sql_chain
 
 # Initialize LLM
-# llm = ChatOpenAI(model="gpt-4o-mini", stream=True)
 llm = ChatOpenAI(model="gpt-3.5-turbo", stream=True)
 
 prompt = load_prompt("prompts/00_route.yaml", encoding="utf-8")
 
+general_prompt = PromptTemplate.from_template(
+    """You are an assistant for question-answering tasks.  \
+    Use the following pieces of retrieved context to answer the question. \
+    Check first Previous Chat History. 
+    Answer in Korean.
+
+    #Previous Chat History:
+    {chat_history}
+
+    Question: {question}
+    Answer:"""
+)
+
 
 # 체인을 생성합니다.
 chain = prompt | llm | StrOutputParser()  # 문자열 출력 파서를 사용합니다.
-
-math_chain = (
-    PromptTemplate.from_template(
-        """You are an expert in math. \
-Always answer questions starting with "깨봉선생님께서 말씀하시기를..". \
-Respond to the following question:
-
-Question: {question}
-Answer:"""
-    )
-    # OpenAI의 LLM을 사용합니다.
-    | llm
-)
-
-science_chain = (
-    PromptTemplate.from_template(
-        """You are an expert in science. \
-Always answer questions starting with "법무법인에서 말씀 드리겠습니다...". \
-Respond to the following question:
-
-Question: {question}
-Answer:"""
-    )
-    # OpenAI의 LLM을 사용합니다.
-    | llm
-)
-
-general_chain = (
-    PromptTemplate.from_template(
-        """Respond to the following question concisely:
-
-Question: {question}
-Answer:"""
-    )
-    # OpenAI의 LLM을 사용합니다.
-    | llm
-)
 
 
 def route(info):
@@ -63,16 +42,18 @@ def route(info):
         print(f"Invalid input for route: {info}")
         raise ValueError("Input to route function must be a dictionary.")
 
-    if "탁구" in info["topic"].lower():
-        print("Routing to rag_chain from session_state (탁구 관련)")
-        # return get_route_rag_chain()
-        return create_memory_chain()
-    elif "법무" in info["topic"].lower():
-        print("Routing to law science_chain")
-        return science_chain
+    if "법무법인" in info["topic"].lower():
+        print("Routing to rag_chain (법무법인 관련)")
+        # 법무법인 관련 질의 카테고리(업무)가 많은 경우 해당 업무에 포함되는지 여부 체크하는 노드가 필요
+        # todo : rag 의 내용이 없는 경우 웹검색 로직 또는 별도 데이터 조회
+        return create_rag_chain()
+    elif "연락처" in info["topic"].lower():
+        print("Routing to 연락처 chain")
+        # todo : 연락처 데이터가 없는 경우 쿼리를 변경해서 n번 조회 등
+        return get_sql_chain()
     else:
         print("Routing to general_chain")
-        return general_chain
+        return create_general_chain()
 
 
 router_chain = (
@@ -80,12 +61,20 @@ router_chain = (
         "topic": chain,  # chain 실행 결과를 적절히 변환
         "question": itemgetter("question"),
         # "question": RunnablePassthrough(),
+        "chat_history": itemgetter("chat_history"),
     }
     | RunnableLambda(route)
-    | StrOutputParser()
+    | StrOutputParser()  # 필요 없을듯 여기서 공통 LLM을 여기서 넣어야할듯
+)
+
+route_with_history = RunnableWithMessageHistory(
+    router_chain,
+    get_session_history,  # 세션 기록을 가져오는 함수
+    input_messages_key="question",  # 사용자의 질문이 템플릿 변수에 들어갈 key
+    history_messages_key="chat_history",  # 기록 메시지의 키
 )
 
 
 def get_router_chain():
-    st.session_state["router_chain"] = router_chain
+    st.session_state["router_chain"] = route_with_history
     return router_chain
