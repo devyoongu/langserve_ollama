@@ -5,12 +5,11 @@ from langchain.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 from faiss import IndexFlatL2
-from ragChain import get_rag_chain
 from fastapi import UploadFile
+from chainUtils import ALLOWED_TYPES
 
 # 기록 파일 경로
 EMBEDDINGS_RECORD_FILE = "embedded_files.txt"
-VECTORSTORE_PATH = "vectorstores/main_vectorstore.faiss"  # 통합 벡터스토어 경로
 EMBEDDING_DIM = 1536  # OpenAI 기본 임베딩 차원
 
 
@@ -32,49 +31,53 @@ def record_embedded_file(file_path):
         f.write(f"{file_path}\n")  # 파일 경로를 CSV 형식으로 저장
 
 
-def load_existing_retriever():
+def load_existing_retriever(type):
     """기존 벡터스토어에서 retriever 로드"""
-    embeddings = OpenAIEmbeddings()
-    if os.path.exists(VECTORSTORE_PATH):
-        vectorstore = FAISS.load_local(
-            VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True
+    # 타입 유효성 검사
+    if type not in ALLOWED_TYPES:
+        raise ValueError(
+            f"Invalid type '{type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}"
         )
-        print(f"[INFO] Loaded existing vectorstore from '{VECTORSTORE_PATH}'.")
-        return vectorstore.as_retriever()
+
+    # 타입별 벡터스토어 경로 설정
+    vectorstore_path = f"vectorstores/{type}_vectorstore.faiss"
+    embeddings = OpenAIEmbeddings()
+
+    if os.path.exists(vectorstore_path):
+        vectorstore = FAISS.load_local(
+            vectorstore_path, embeddings, allow_dangerous_deserialization=True
+        )
+        print(
+            f"[INFO] Loaded existing vectorstore for type '{type}' from '{vectorstore_path}'."
+        )
     else:
         print(
-            f"[WARNING] Vectorstore '{VECTORSTORE_PATH}' not found. Returning empty retriever."
+            f"[WARNING] Vectorstore for type '{type}' at '{vectorstore_path}' not found. Returning empty retriever."
         )
         # 빈 검색기 생성
         index = IndexFlatL2(EMBEDDING_DIM)
         docstore = {}
-        return FAISS(
+        vectorstore = FAISS(
             index=index,
             docstore=docstore,
             index_to_docstore_id={},
             embedding_function=embeddings,
-        ).as_retriever()
+        )
+
+    # type에 따라 session_state에 retriever 설정
+    retriever_key = f"{type}_retriever"
+    if type == "document":
+        st.session_state[retriever_key] = vectorstore.as_retriever()
+    elif type == "department":
+        st.session_state[retriever_key] = vectorstore.as_retriever()
+
+    return vectorstore.as_retriever()
 
 
-def default_retriever():
-    # 경고 메시지를 띄우기 위한 빈 영역
-    warning_msg = st.empty()
-
-    # 통합 벡터스토어 로드
-    retriever = load_existing_retriever()
-    if retriever is None:
-        warning_msg.error("Vectorstore가 존재하지 않습니다. 파일을 업로드 해주세요.")
-    return retriever
-
-
-# 사용할 타입 정의
-ALLOWED_TYPES = {"document", "department"}
-
-
-def create_retriever(file_path):
+def create_retriever(file_path, type):
     # 이미 임베딩된 파일인지 확인
     if is_file_embedded(file_path):
-        return load_existing_retriever()
+        return load_existing_retriever(type)
 
     # 단계 1: 문서 로드(Load Documents)
     loader = PDFPlumberLoader(file_path)
@@ -88,9 +91,12 @@ def create_retriever(file_path):
     embeddings = OpenAIEmbeddings()
 
     # 단계 4: 기존 벡터스토어 로드 또는 새로 생성
-    if os.path.exists(VECTORSTORE_PATH):
+    vectorstore_path = (
+        f"vectorstores/{type}_vectorstore.faiss"  # 타입별로 다른 경로 설정
+    )
+    if os.path.exists(vectorstore_path):
         vectorstore = FAISS.load_local(
-            VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True
+            vectorstore_path, embeddings, allow_dangerous_deserialization=True
         )
         vectorstore.add_documents(split_documents)
     else:
@@ -99,32 +105,30 @@ def create_retriever(file_path):
         )
 
     # 벡터스토어 저장
-    os.makedirs(os.path.dirname(VECTORSTORE_PATH), exist_ok=True)
-    vectorstore.save_local(VECTORSTORE_PATH)
+    os.makedirs(os.path.dirname(vectorstore_path), exist_ok=True)
+    vectorstore.save_local(vectorstore_path)
 
     # 파일 기록
     record_embedded_file(file_path)
 
     print(
-        f"[INFO] File '{file_path}' has been successfully embedded and added to the vectorstore."
+        f"[INFO] File '{file_path}' with type '{type}' has been successfully embedded and added to the vectorstore."
     )
+    retriever_key = f"{type}_retriever"
+    st.session_state[retriever_key] = vectorstore.as_retriever()
     return vectorstore.as_retriever()
 
 
-def process_file(uploaded_file):
+def process_file(uploaded_file, type):
+    # 타입 유효성 검사
+    print(f"upload type is {type}")
+    if type not in ALLOWED_TYPES:
+        raise ValueError(
+            f"Invalid type '{type}'. Allowed types are: {', '.join(ALLOWED_TYPES)}"
+        )
     print(f"[INFO] uploaded_file is '{uploaded_file}'.")
     file_path = save_file(uploaded_file)
-    retriever = create_retriever(file_path)
-    st.session_state["retriever"] = retriever
-    chain = get_rag_chain()
-    st.session_state["chain"] = chain
-
-
-def process_without_file():
-    retriever = default_retriever()
-    st.session_state["retriever"] = retriever
-    chain = get_rag_chain()
-    st.session_state["chain"] = chain
+    create_retriever(file_path, type)
 
 
 # 파일을 캐시 저장(시간이 오래 걸리는 작업을 처리할 예정)

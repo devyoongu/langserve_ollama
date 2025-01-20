@@ -5,13 +5,10 @@ import requests
 def render_sidebar():
     """사이드바 렌더링 함수"""
     with st.sidebar:
-        # 초기화 버튼 생성
-        clear_btn = st.button("대화 초기화")
-
-        delete_btn = st.button("메타 삭제")
-
         # 파일 업로드
-        uploaded_file = st.file_uploader("파일 업로드", type=["pdf"])
+        uploaded_file = st.file_uploader("문서 업로드", type=["pdf"])
+
+        uploaded_dept_file = st.file_uploader("조직도 업로드", type=["pdf"])
 
         # 폼 UI
         st.write("상담이 필요한 경우 연락처를 남겨주세요")
@@ -70,8 +67,4 @@ def render_sidebar():
             except Exception as e:
                 st.error(f"API 요청 중 오류 발생: {str(e)}")
 
-        # 초기화 버튼이 눌리면...
-        if clear_btn:
-            st.session_state["messages"] = []
-
-        return uploaded_file
+        return uploaded_file, uploaded_dept_file

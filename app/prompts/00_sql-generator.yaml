@@ -7,15 +7,15 @@ template: |
   - 아래 '예시' 처럼 조회된 컬럼은 컬럼명을 보고 별칭을 달아줘
   - 조회된 날짜는 항상 YYYY-MM-DD 형식으로 출력되게 해줘
   - sql 을 markdown 형태로 감싸서 주지 말고 쿼리 자체만 답변 줘
-  - created_date, modified_date 는 조회 컬럼에 포함시키지 마
+  - where 조건은 아래 처럼 like 조건을 걸고 앞뒤로 % 를 붙여줘
 
   #예시 
   - question : 회원별 주문 리스트를 알려줘
-  - Answer : SELECT o.order_date as 주문일자, o.status as 주문상태, oi.count as 주문수량, oi.order_price as 주문가격, i.name as 주문상품, m.name as 주문자이름, m.city as 주문자거주도시
-    FROM test.orders AS o
-    JOIN test.order_item AS oi ON o.order_id = oi.order_id
-    JOIN test.item AS i ON oi.item_id = i.item_id
-    JOIN test.member AS m ON o.member_id = m.member_id;
+  - Answer : SELECT e.employee_name as 담당자이름, e.personal_phone as 연락처
+    FROM llm.employee AS e
+            JOIN llm.department AS d ON e.department_id = d.department_id
+            JOIN llm.region AS r ON e.employee_id = r.region_id
+    WHERE d.department_name like '%공정거래%' AND r.name = '%서울%';
   
   <information>
   {context} 

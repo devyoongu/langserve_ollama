@@ -43,12 +43,12 @@ def route(info):
         raise ValueError("Input to route function must be a dictionary.")
 
     if "법무법인" in info["topic"].lower():
-        print("Routing to rag_chain from session_state (법무법인 관련)")
-        # return get_route_rag_chain()
+        print("Routing to rag_chain (법무법인 관련)")
+        # todo : rag 의 내용이 없는 경우 웹검색 로직 또는 별도 데이터 조회
         return create_rag_chain()
     elif "연락처" in info["topic"].lower():
         print("Routing to 연락처 chain")
-        # return general_chain
+        # todo : 연락처 데이터가 없는 경우 쿼리를 변경해서 n번 조회 등
         return get_sql_chain()
     else:
         print("Routing to general_chain")

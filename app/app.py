@@ -10,7 +10,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from dotenv import load_dotenv
-from retriever import process_file, process_without_file
+from retriever import process_file, load_existing_retriever
 from memoryRoutingChain import get_router_chain
 from sidebar import render_sidebar
 from button import render_buttons
@@ -22,7 +22,7 @@ from llmApi import send_chat_log_to_api
 # API KEY 정보로드
 load_dotenv()
 
-st.title("RAG-YG-Action 프로젝트")
+# st.title("RAG-YG-Action 프로젝트")
 
 # 프로젝트 이름을 입력합니다.
 logging.langsmith("[Project] theDream RAG")
@@ -32,7 +32,7 @@ initialize_session()
 selected_category = render_buttons()
 
 # 사이드바 렌더링
-uploaded_file = render_sidebar()
+uploaded_file, uploaded_dept_file = render_sidebar()
 
 
 # 새로운 메시지를 추가
@@ -42,9 +42,12 @@ def add_message(role, message):
 
 # 파일이 업로드 되었을 때
 if uploaded_file:
-    process_file(uploaded_file)
+    process_file(uploaded_file, "document")
+elif uploaded_dept_file:
+    process_file(uploaded_dept_file, "department")
 else:
-    process_without_file()
+    load_existing_retriever("document")
+    load_existing_retriever("department")
     get_router_chain()
 
 

@@ -37,7 +37,7 @@ secondPrompt = load_prompt("prompts/01_table-generator.yaml", encoding="utf-8")
 # 1차 체인 생성
 def get_first_chain():
 
-    retriever = st.session_state["retriever"]
+    retriever = st.session_state["department_retriever"]
 
     # 일반 Chain 생성
     chain = (

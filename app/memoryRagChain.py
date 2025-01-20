@@ -25,7 +25,7 @@ def fetch_context(question, retriever):
 # 체인 생성
 def create_rag_chain():
 
-    retriever = st.session_state["retriever"]
+    retriever = st.session_state["document_retriever"]
 
     # 프롬프트 정의
     prompt = PromptTemplate.from_template(
