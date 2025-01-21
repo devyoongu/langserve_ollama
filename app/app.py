@@ -1,12 +1,7 @@
 from pyexpat import model
 import streamlit as st
-import requests
 from langchain_core.messages.chat import ChatMessage
-from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from langchain_teddynote import logging
 from dotenv import load_dotenv
 from retriever import process_file, load_existing_retriever
