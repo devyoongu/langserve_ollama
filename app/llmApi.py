@@ -14,7 +14,7 @@ def send_chat_log_to_api(chat_logs):
     response_data = response.json()
     if "data" in response_data and "id" in response_data["data"]:
         chat_thread_id = response_data["data"]["id"]
-        st.session_state["chat_thread_id"] = response_data["data"]["id"]
+        st.session_state["chat_thread_id"] = chat_thread_id
 
 
 def call_external_api(sqlQuery):
